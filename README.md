@@ -191,24 +191,24 @@ For each weight in the network, the gradient answers: "If I nudge this weight sl
 >       - It answers: "If I increase this weight $w$ by a tiny amount $\epsilon$, how much does the Loss $L$ change?"
 >
 >   2. *The Gradient Vector* <br />
->   A neural network has thousands of weights ($w_1, w_2, ... w_n$). The gradient ($\nabla L$) is simply a vector collecting the partial derivatives for every single weight: $$ \nabla L = [{{\partial L} \over {\partial w_1}}, {{\partial L} \over {\partial w_2}}, ...., {{\partial L} \over {\partial w_n}}] $$ 
+>   A neural network has thousands of weights ($w_1, w_2, ... w_n$). The gradient ($\nabla L$) is simply a vector collecting the partial derivatives for every single weight: $$\nabla L = [{{\partial L} \over {\partial w_1}}, {{\partial L} \over {\partial w_2}}, ...., {{\partial L} \over {\partial w_n}}]$$ 
 This vector points in the direction of the steepest increase in loss. To decrease loss, we move in the opposite direction (negative gradient).
 >
 > **Backpropagation: The Chain Rule in Action** <br />
 > How do we calculate $\frac{\partial L}{\partial w}$ for a weight deep inside the network? We use the Chain Rule.
 >
-> The Chain Rule states that if variable $L$ depends on $y$, and $y$ depends on $x$, then: $${{{\partial L}\over{\partial x}} = {{\partial L}\over{\partial y}}.{{\partial y}\over{\partial x}} }$$
+> The Chain Rule states that if variable $L$ depends on $y$, and $y$ depends on $x$, then: $${{{\partial L}\over{\partial x}} = {{\partial L}\over{\partial y}}.{{\partial y}\over{\partial x}}}$$
 > - *A Concrete Examples:* <br />
 >   + Imagine a single neuron with one weight $w$, one input $x$, and a target $y$.
 >      1. Prediction: $\hat{y} = w \cdot x$
 >      2. Loss (MSE): $L = (\hat{y} - y)^2$
 >
 >       To update $w$, we need the gradient $\frac{\partial L}{\partial w}$. We apply the chain rule:
->       + *Step A: Calculate derivate of Loss w.r.t Prediction ($\frac{\partial L}{\partial \hat{y}}$)*: $$ L = {(\hat{y} - y)^2} \rarr {\partial L \over \partial y} = 2(\hat{y} - y)$$
+>       + *Step A: Calculate derivate of Loss w.r.t Prediction ( $\frac{\partial L}{\partial \hat{y}}$ )*: $$L = {(\hat{y} - y)^2} \rarr {\partial L \over \partial y} = 2(\hat{y} - y)$$
 This is the "error" term.
->       + *Step B: Calculate derivative of Prediction w.r.t Weight ($\frac{\partial \hat{y}}{\partial w}$):* $$ \hat{y} = w . x \rarr {\partial \hat{y} \over \partial w} = x $$
+>       + *Step B: Calculate derivative of Prediction w.r.t Weight ( $\frac{\partial \hat{y}}{\partial w}$ ):* $$\hat{y} = w . x \rarr {\partial \hat{y} \over \partial w} = x$$
 This is the "input" term.
->       + *Step C: Combine them:* $$ {\partial L \over \partial w} = {2(\hat{y} - y)} . x $$
+>       + *Step C: Combine them:* $${\partial L \over \partial w} = {2(\hat{y} - y)} . x$$
 This is the chain rule!
 >
 >       This result tells us exactly how to update the weight: the adjustment depends on the magnitude of the error $(\hat{y} - y)$ multiplied by the input strength $x$. Backpropagation is just applying this chain rule recursively from the last layer back to the first.
@@ -281,7 +281,112 @@ Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF
 >
 >This iterative process is how neural networks "learn" the optimal weights to minimise the loss function and accurately classify sleep stages.**
 
+# Setup
+We will setup a python virtual environment (venv) for this project:
+
+```bash
+# 1. Create the venv
+python3 -m venv .venv
+
+# 2. Activate the venv
+source .venv/bin/activate
+
+# 3. Install dependencies
+pip install -r reqs.txt
+```
+
+Let's now check whether a CUDA-enabled GPU is available for the `torch` lib in our venv:
+```bash
+# 1. Activate the venv
+source .venv/bin/activate
+
+# 2. Torch CUDA check
+python3 -c "import torch; print('CUDA-enabled GPU found. Training should be faster.') if torch.cuda.is_available() else print('No GPU found. Training will be carried out on CPU, which might be slower.\n\nIf running on Google Colab, you can request a GPU runtime by clicking \"Runtime/Change runtime type\" in the top bar menu, then selecting \"GPU\" under \"Hardware accelerator\".')"
+```
+
+To make sure MNE-Python was installed correctly, type the following command in a terminal:
+```bash
+# 1. Activate the venv
+source .venv/bin/activate
+
+# 2. display mne setup system information
+python -c "import mne; mne.sys_info()"
+```
+
+This should display some system information along with the versions of MNE-Python and its dependencies. Typical output looks like this:
+
+```bash
+Platform                Windows-10-10.0.20348-SP0
+Python                  3.10.12 | packaged by conda-forge | (main, Jun 23 2023, 22:34:57) [MSC v.1936 64 bit (AMD64)]
+Executable              C:\Miniconda3\envs\mne\python.exe
+CPU                     Intel64 Family 6 Model 85 Stepping 7, GenuineIntel (2 cores)
+Memory                  7.0 GB
+
+Core
+├☑ mne                  1.6.0.dev67+gb12384562
+├☑ numpy                1.25.2 (OpenBLAS 0.3.23.dev with 1 thread)
+├☑ scipy                1.11.2
+├☑ matplotlib           3.7.2 (backend=QtAgg)
+├☑ pooch                1.7.0
+└☑ jinja2               3.1.2
+
+Numerical (optional)
+├☑ sklearn              1.3.0
+├☑ nibabel              5.1.0
+├☑ nilearn              0.10.1
+├☑ dipy                 1.7.0
+├☑ openmeeg             2.5.6
+├☑ pandas               2.1.0
+└☐ unavailable          numba, cupy
+
+Visualization (optional)
+├☑ pyvista              0.41.1 (OpenGL 3.3 (Core Profile) Mesa 10.2.4 (git-d92815a) via Gallium 0.4 on llvmpipe (LLVM 3.4, 256 bits))
+├☑ pyvistaqt            0.0.0
+├☑ ipyvtklink           0.2.2
+├☑ vtk                  9.2.6
+├☑ qtpy                 2.4.0 (PyQt5=5.15.8)
+├☑ ipympl               0.9.3
+├☑ pyqtgraph            0.13.3
+└☑ mne-qt-browser       0.5.2
+
+Ecosystem (optional)
+└☐ unavailable          mne-bids, mne-nirs, mne-features, mne-connectivity, mne-icalabel, mne-bids-pipeline
+```
+
+Lastly, make sure to select the kernel with name `.venv (<python verion>) (Python <python verion>)` when running the [jupyter notebook](./sleep_staging.ipynb). 
+
+## Project Structure
+```bash
+.
+├── README.md
+├── imgs                    # Screenshots and visualizations for the README
+├── reqs.txt                # Python dependencies
+├── sleep_staging.ipynb     # Main entry point: Data exploration & model training
+└── src                     # Core logic and source code
+    ├── models              # Model architectures and classes
+    │   └── __init__.py
+    └── utils               # Helper functions scripts
+        ├── __init__.py
+        └── data_loader.py  # Data processing and loading script
+```
+
 # Update Logs
+
+## 16th of Feb, 2026
+
+> ### 11:34 pm (IST)
+> #### New:
+>   + Added [sleep_staging.ipynb], which is the main entry point, and currently contains the data loading section.
+>   + Added [reqs.txt](./reqs.txt) - Python dependencies
+>   + Added [src](./src) dir - which contains Core logic and source code
+>        - Added [utils](./src/utils/) dir with 
+        [\_\_init\_\_.py](./src/utils/__init__.py) and [data_loader.py](./src/utils/data_loader.py) modules.
+>
+> #### Updates:
+>   + Updated [README.md](./README.md).
+>   + Updated [.gitignore](./.gitignore) - to ignore the `/data` dir.
+
+
 
 ## 13th of Feb, 2026
 
@@ -290,7 +395,7 @@ Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF
 >   + Added [imgs](./imgs) dir - which at the moment contains images used in the [README.md](./README.md) file.
 >
 > #### Updates:
->   + Updated the [README.md](./README.md).
+>   + Updated [README.md](./README.md).
 
 
 
