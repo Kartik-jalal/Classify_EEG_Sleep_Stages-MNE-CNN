@@ -5,7 +5,7 @@ This module is responsible for loading the raw sleep staging data recording from
 downloaded PhysioNet Sleep dataset files.
 
 ## Author: Kartik M. Jalal
-## Last Updated: 02-16-2026
+## Last Updated: 02-18-2026
 """
 import os
 
@@ -60,42 +60,50 @@ def load_sleep_physionet_raw_data(
     # crop the wake periods duration from the beginning and end of the recording
     if crop_wake_mins > 0:
         # Create a boolean list where True means the annotation is a sleep stage
-        # (1, 2, 3, 4, R) and False means it's a wake stage (W) or unkown.
+        # ('1', '2', '3', '4', 'R') and False means it's a wake stage ('W') or unknown.
         # Note: The Sleep Physionet dataset (which this code is designed for) is 
         # quite old. It was annotated using the older Rechtschaffen & Kales (R&K)
         # rules from 1968, which used:
-        #   "Sleep stage 1", 
-        #   "Sleep stage 2", 
-        #   "Sleep stage 3" ("moderate" deep sleep.),
-        #   "Sleep stage 4" ("very deep" deep sleep.), and
-        #   "REM sleep" for sleep stages, and
-        #   "Wake" for wake stages.
-        # The mordern AASM Rules for sleep staging uses 5 stages:
-        #   W, N1, N2, N3, and R.
-        mask = [
-            sleep_stage_annot[-1] # Takes the last character of the annotation string (e.g., "Sleep stage 1" -> "1").
-            in ['1', '2', '3', '4', 'R'] 
+        #   "Sleep stage 1", "Sleep stage 2", "Sleep stage 3", "Sleep stage 4", and "REM sleep".
+        # The modern AASM Rules for sleep staging use 5 stages: W, N1, N2, N3, and R.
+        mask = np.array([
+            sleep_stage_annot[-1] in ['1', '2', '3', '4', 'R'] 
             for sleep_stage_annot in annots.description                           
-        ]
+        ])
+
         # Get the indices of all sleep stage annotations.
         sleep_event_inds = np.where(mask)[0]
 
-        # get the onset time of the first sleep stage annotation and subtract the
-        # desired wake duration (in seconds) to get the new start time for cropping
-        # to keep a buffer of wake time before sleep starts.
-        tmin = annots[int(sleep_event_inds[0])]['onset'] - (crop_wake_mins * 60) # convert minutes to seconds
-        # get the offset time of the last sleep stage annotation and add the desired
-        # wake duration (in seconds) to get the new end time for cropping to keep a
-        # buffer of wake time after sleep ends.
-        tmax = annots[int(sleep_event_inds[-1])]['onset'] + (crop_wake_mins * 60) # convert minutes to seconds
+        # --- CALCULATE TMIN (Start Time) ---
+        # Default start time is the beginning of the recording
+        tmin = 0.0
+        
+        # Calculate desired start: Onset of first sleep stage - buffer
+        first_sleep_onset = annots[int(sleep_event_inds[0])]['onset']
+        crop_tmin_to = first_sleep_onset - (crop_wake_mins * 60)
+        
+        # Only update tmin if the cropped time is actually later than 0.0
+        # Use max() to ensure we don't go negative
+        tmin = max(tmin, crop_tmin_to)
 
-        # crop the raw data to the new start and end times, effectively removing
+        # --- CALCULATE TMAX (End Time) ---
+        # Default end time is the guaranteed last valid timestamp in the raw object.
+        tmax = raw.times[-1]
+
+        # Calculate desired end: End of last sleep stage + buffer
+        last_sleep_idx = int(sleep_event_inds[-1])
+        last_sleep_end = annots[last_sleep_idx]['onset'] + annots[last_sleep_idx]['duration']
+        crop_tmax_to = last_sleep_end + (crop_wake_mins * 60)
+        
+        # Only update tmax if the cropped time is actually shorter than the full file
+        # Use min() to ensure we don't exceed the file's actual duration (fixes ms overflow errors)
+        tmax = min(tmax, crop_tmax_to)
+
+        # --- CROP ---
+        # Crop the raw data to the new start and end times, effectively removing
         # long wake periods at the beginning and end of the recording while keeping
         # a buffer of wake time around the sleep stages.
-        raw.crop(
-            tmin=tmin, 
-            tmax=tmax
-        )
+        raw.crop(tmin=tmin, tmax=tmax)
 
     # rename the EEG channels to a consistent naming convention (e.g., "EEG Fpz-Cz" -> "Fpz-Cz")
     ch_names = {
@@ -111,9 +119,10 @@ def load_sleep_physionet_raw_data(
     # save the subject and recording ID as metadata in the raw.info object for later use
     basename = os.path.basename(raw_fname) # get the filename from the full path, e.g., SC4001E0-PSG.edf
     subject_id, record_id = int(basename[3:5]), int(basename[5]) # e.g., "00" and 1 from "SC4001..."
+    
     raw.info['subject_info'] = {
         'id': subject_id,
-        'rec_id': record_id
+        'his_id': f"Subject: {subject_id}, Recording: {record_id}" 
     }
 
     return raw

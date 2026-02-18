@@ -121,7 +121,9 @@ A **loss function** measures how well the deep learning network performs its tas
 #### **Mean Squared Error (MSE) - For Regression Tasks**
 When predicting continuous values (e.g., temperature, age, signal amplitude), we use MSE. It calculates the average squared difference between predicted and true values:
 
-$$ MSE = \frac{1}{m} \sum_{i=1}^m ||\hat{y}^{(i)} - y^{(i)}||^2 $$
+```math
+MSE = \frac{1}{m} \sum_{i=1}^m ||\hat{y}^{(i)} - y^{(i)}||^2
+```
 
 where:
 - $m$ = number of training samples
@@ -136,7 +138,9 @@ where:
 #### **Categorical Cross-Entropy - For Multi-Class Classification**
 For sleep staging, we have 5 classes (Wake, N1, N2, N3, REM). Cross-entropy measures how different the predicted probability distribution is from the true distribution:
 
-$$ CrossEntropy = -\sum_{i=1}^{m}\sum_{j=1}^{c} y_{j}^{(i)} \log(\hat{y}_{j}^{(i)}) $$
+```math 
+CrossEntropy = -\sum_{i=1}^{m}\sum_{j=1}^{c} y_{j}^{(i)} \log(\hat{y}_{j}^{(i)}) 
+```
 
 
 where:
@@ -374,9 +378,17 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 ## 16th of Feb, 2026
 
+> ### 11:58 pm (IST)
+> #### Updates:
+>   + Fixed the tmax crop error in [data_loader.py](./src/utils/data_loader.py) module's `load_sleep_physionet_raw_data()` function.
+>   + Updated the data loading section code in [sleep_staging.ipynb](./sleep_staging.ipynb). 
+>   + Updated [README.md](./README.md).
+
+## 16th of Feb, 2026
+
 > ### 11:34 pm (IST)
 > #### New:
->   + Added [sleep_staging.ipynb], which is the main entry point, and currently contains the data loading section.
+>   + Added [sleep_staging.ipynb](./sleep_staging.ipynb), which is the main entry point, and currently contains the data loading section.
 >   + Added [reqs.txt](./reqs.txt) - Python dependencies
 >   + Added [src](./src) dir - which contains Core logic and source code
 >        - Added [utils](./src/utils/) dir with 
