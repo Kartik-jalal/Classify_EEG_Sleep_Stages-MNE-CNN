@@ -376,7 +376,21 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 # Update Logs
 
-## 16th of Feb, 2026
+## 19th of Feb, 2026
+
+> ### 11:57 pm (IST)
+> #### New:
+>   + Added [datasets](/src/datasets/) src dir.
+>       - Created [epochs.py](/src/datasets/epochs.py) which contains the `EpochsDataset` class and initialised [__init__.py](/src/datasets/__init__.py) for the defined module.
+>   + Added [preprocessing.py] module to [utils](./src/utils/) src dir.
+
+> #### Updates:
+>   + Updated [data_loader.py](/src/utils/data_loader.py) Docstring.
+>   + Updated [__init__.py] from [utils](/src/utils/) Docstring and added the new module.
+>   + Updated [sleep_staging.ipynb](./sleep_staging.ipynb) with new Epochs section. 
+>   + Updated [README.md](./README.md).
+
+## 18th of Feb, 2026
 
 > ### 11:58 pm (IST)
 > #### Updates:
