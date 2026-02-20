@@ -363,32 +363,55 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 ```bash
 .
 ├── README.md
-├── imgs                    # Screenshots and visualizations for the README
-├── reqs.txt                # Python dependencies
-├── sleep_staging.ipynb     # Main entry point: Data exploration & model training
-└── src                     # Core logic and source code
-    ├── models              # Model architectures and classes
+├── imgs                        # Screenshots and visualizations for the README
+├── reqs.txt                    # Python dependencies
+├── sleep_staging.ipynb         # Main entry point: Data exploration & model training
+└── src                         # Core logic and source code
+    ├── datasets                # Datasets classes
+    │   ├── __init__.py
+    │   ├── epochs.py           # PyTorch Dataset wrapper for MNE Epochs objectsData loading script
+    │   └── split.py            # Script for randomly splits a dataset into train, Val, and test sets
+    ├── models                  # Model architectures
     │   └── __init__.py
-    └── utils               # Helper functions scripts
+    └── utils                   # Helper functions scripts
         ├── __init__.py
-        └── data_loader.py  # Data processing and loading script
+        ├── data_loader.py      # Data loading script
+        └── preprocessing.py    # Data processing script
 ```
 
 # Update Logs
+
+
+## 21th of Feb, 2026
+
+> ### 12:31 am (IST)
+> #### New:
+>   + Added [split.py](/src/datasets/split.py) - contains dataset split function.
+>
+> #### Updates:
+>   + Updated [sleep_staging.ipynb](./sleep_staging.ipynb) with new Epochs section.
+>   + Updated [\_\_init\_\_.py](./src/datasets/__init__.py) (from [datasets](/src/datasets/)) Docstring and added the new module.
+>   + Updated [\_\_init\_\_.py](./src/utils/__init__.py), [data_loader.py](/src/utils/data_loader.py), [preprocessing.py](/src/utils/preprocessing.py) and
+[epochs.py](/src/datasets/epochs.py) docstring.
+>   + Updated [README.md](./README.md).
+
+
 
 ## 19th of Feb, 2026
 
 > ### 11:57 pm (IST)
 > #### New:
 >   + Added [datasets](/src/datasets/) src dir.
->       - Created [epochs.py](/src/datasets/epochs.py) which contains the `EpochsDataset` class and initialised [__init__.py](/src/datasets/__init__.py) for the defined module.
->   + Added [preprocessing.py] module to [utils](./src/utils/) src dir.
-
+>       - Created [epochs.py](/src/datasets/epochs.py) which contains the `EpochsDataset` class and initialised [\_\_init\_\_.py](/src/datasets/__init__.py) for the defined module.
+>   + Added [preprocessing.py](src/utils/preprocessing.py) module to [utils](./src/utils/) src dir.
+>
 > #### Updates:
 >   + Updated [data_loader.py](/src/utils/data_loader.py) Docstring.
->   + Updated [__init__.py] from [utils](/src/utils/) Docstring and added the new module.
+>   + Updated [\_\_init\_\_.py](./src/utils/__init__.py) (from [utils](/src/utils/)) Docstring and added the new module.
 >   + Updated [sleep_staging.ipynb](./sleep_staging.ipynb) with new Epochs section. 
 >   + Updated [README.md](./README.md).
+
+
 
 ## 18th of Feb, 2026
 
@@ -397,6 +420,8 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 >   + Fixed the tmax crop error in [data_loader.py](./src/utils/data_loader.py) module's `load_sleep_physionet_raw_data()` function.
 >   + Updated the data loading section code in [sleep_staging.ipynb](./sleep_staging.ipynb). 
 >   + Updated [README.md](./README.md).
+
+
 
 ## 16th of Feb, 2026
 
