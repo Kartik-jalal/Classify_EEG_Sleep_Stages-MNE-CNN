@@ -5,8 +5,8 @@ This module defines the EpochsDataset class, which is a PyTorch Dataset wrapper 
 MNE Epochs objects. It allows us to easily convert MNE Epochs into a format that can be
 fed into a PyTorch DataLoader for training deep learning models on sleep staging tasks.
 
-~~ Author: Kartik M. Jalal
-~~ Last Updated: 02-19-2026
+##### Author: Kartik M. Jalal
+##### Last Updated: 02-21-2026
 """
 import torch
 from torch.utils.data import Dataset

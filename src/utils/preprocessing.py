@@ -4,8 +4,8 @@ Docstring for src.utils.__init__.py.preprocessing
 This module contains functions for preprocessing the raw sleep staging data, such as
 epoch extraction and standardization needed for training a sleep stage classifier.
 
-~~ Author: Kartik M. Jalal
-~~ Last Updated: 02-19-2026
+##### Author: Kartik M. Jalal
+##### Last Updated: 02-19-2026
 """
 
 import mne

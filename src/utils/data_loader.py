@@ -4,8 +4,8 @@ Docstring for src.utils.__init__.py.data_loader
 This module is responsible for loading the raw sleep staging data recording from the 
 downloaded PhysioNet Sleep dataset files.
 
-~~ Author: Kartik M. Jalal
-~~ Last Updated: 02-19-2026
+##### Author: Kartik M. Jalal
+##### Last Updated: 02-21-2026
 """
 import os
 
