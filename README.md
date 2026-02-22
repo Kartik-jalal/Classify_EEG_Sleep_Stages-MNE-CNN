@@ -372,7 +372,8 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
     │   ├── epochs.py           # PyTorch Dataset wrapper for MNE Epochs objectsData loading script
     │   └── split.py            # Script for randomly splits a dataset into train, Val, and test sets
     ├── models                  # Model architectures
-    │   └── __init__.py
+    │   ├──  __init__.py
+    │   └── models.py           # Defines the model class
     └── utils                   # Helper functions scripts
         ├── __init__.py
         ├── data_loader.py      # Data loading script
