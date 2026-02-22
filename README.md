@@ -381,6 +381,18 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 # Update Logs
 
+## 22th of Feb, 2026
+
+> ### 10:16 am (IST)
+> #### New:
+>   + Added [models](/src/models) dir under [src](/src) - contains DL model class.
+>       - Added [sleep_stager_chambon_2018.py](/src/models/sleep_stager_chambon_2018.py) and [\_\_init\_\_.py](/src/models/__init__.py) - defines and exposes the `torch.nn.Module` based `SleepStagerChambon2018` class.
+>
+> #### Updates:
+>   + Updated [sleep_staging.ipynb](./sleep_staging.ipynb) with new "Initialize the model" section.
+>   + Updated [\_\_init\_\_.py](./src/utils/__init__.py) (from [utils][\_\_init\_\_.py](./src/utils)) , [\_\_init\_\_.py](./src/datasets/__init__.py) (from [datasets](/src/datasets/)) docstrings.
+>   + Updated [README.md](./README.md).
+
 
 ## 21th of Feb, 2026
 
