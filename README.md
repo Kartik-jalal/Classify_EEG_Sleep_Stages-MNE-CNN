@@ -270,6 +270,24 @@ Basic SGD has been improved with various techniques:
 >
 > These optimisers are conveniently implemented in frameworks like **PyTorch** and **TensorFlow**, which handle all the gradient calculations automatically through **automatic differentiation** (autodiff).
 
+
+#### **Why use a Learning Rate Scheduler and Gradient Clipping?**
+
+**1. Learning Rate Schedular** <br />
+When training starts, a higher learning rate (LR) helps the model learn fast and escape bad local minima. However, as the model gets closer to the optimal solution, a high LR can cause it to "bounce around" the minimum without ever sitting into it.
+- *When it does:* A `torch` based LR Schedular like `ReduceLROnPlateau` can monitor the validation loss. If the loss stops improving for a set number of epochs, the schedular automatically multiplies the LR by a factor (e.g., 0.5), shrinking the step size.
+- *Why use it:* It allows fast initial learning and fine-grained tuning later, leading to better final performance and peventing the model from stalling.
+
+**2. Gradient Clipping** <br />
+During backpropagation, especially in deep networks or whenn using noisy data like EEG, a single bad batch can result in a massive error. This massive error creates an "exploding gradient" -  a gigantic weight update that destropys all the good progress the model has made so far.
+- *What it does:* When we use gradient clipping by norm (`torch.nn.utils.clip_grad_norm_`), before updating the weights, it checks the total magnitude (norm) if all gardients. If it exceeds a maximum threshold (e.g., 1.0), it scales them all down proportionally so the maximmum is exactly 1.0.
+```math
+Gradient_{new} = Gradient_{old} \times
+{{Total Gradient Norm}\over{max threshold}}
+
+```
+- *Why use it:* It acts as a safety net, ensuring training remains stable and consistent even if a bad abtch produces a batch produces a massive error spike.
+
 <div style="text-align: center;">
 <img src="imgs/learning_rule.png" alt="Learning Rule" width="500">
 <br />
@@ -381,6 +399,13 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 ```
 
 # Update Logs
+
+## 24th of Feb, 2026
+
+> ### 11:42 pm (IST)
+> #### Updates:
+>   + Updated [README.md](./README.md) - with LR Schedular and Gradient Clipping info.
+>   + Updated [reqs.txt](./reqs.txt) - add `mlflow` lib. 
 
 ## 22th of Feb, 2026
 

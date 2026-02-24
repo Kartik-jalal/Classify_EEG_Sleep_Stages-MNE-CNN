@@ -3,3 +3,4 @@ pip
 
 mne[full]
 torch
+mlflow
