@@ -402,10 +402,17 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 ## 24th of Feb, 2026
 
-> ### 11:42 pm (IST)
+> ### 11:47 pm (IST)
 > #### Updates:
 >   + Updated [README.md](./README.md) - with LR Schedular and Gradient Clipping info.
->   + Updated [reqs.txt](./reqs.txt) - add `mlflow` lib. 
+>   + Updated [reqs.txt](./reqs.txt) - add `mlflow` lib. Update the .venv environment:
+>       ```bash
+>       # Activate the .venv environment
+>       source .venv/bin/activate
+>
+>       # Install the newly added mlflow lib
+>       pip install -r reqs.txt
+>       ```
 
 ## 22th of Feb, 2026
 
