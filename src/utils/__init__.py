@@ -3,10 +3,11 @@ Docstring for src.utils
 
 This module serves as a package initializer for the `src.utils` package.
 It imports and exposes utility functions that are used across the project,
-particularly those related to data loading and preprocessing for sleep staging.
+particularly those related to data loading, preprocessing and training/evaluating/testing
+the Pytorch model for sleep staging.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-22-2026
+##### Last Updated: 02-25-2026
 """
 
 from .data_loader import (
@@ -18,10 +19,18 @@ from .preprocessing import (
     scale_epoch
 )
 
+from .train import (
+    fit_model,
+    evaluate
+)
+
 __all__ = [
     # from data_loader.py
     "load_sleep_physionet_raw_data",
     # from preprocessing.py
     "extract_epochs",
-    "scale_epoch"
+    "scale_epoch",
+    # from train.py
+    "fit_model",
+    "evaluate"
 ]
