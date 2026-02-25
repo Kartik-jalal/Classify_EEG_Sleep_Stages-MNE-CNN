@@ -208,3 +208,7 @@ __marimo__/
 
 # downloaded datasets
 data/
+
+# mlflow
+mlflow.db
+mlartifacts/
