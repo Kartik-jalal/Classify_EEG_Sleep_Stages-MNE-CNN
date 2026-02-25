@@ -5,7 +5,7 @@ This module contains functions for preprocessing the raw sleep staging data, suc
 epoch extraction and standardization needed for training a sleep stage classifier.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-21-2026
+##### Last Updated: 02-25-2026
 """
 
 import mne
@@ -26,12 +26,12 @@ def extract_epochs(raw: mne.io.Raw, epoch_length: float = 30.0) -> mne.Epochs:
     # Map annotations to event IDs
     # Note: We merge S3 and S4 into the same ID (4) for modern N3 staging.
     event_ids = {
-        'Sleep stage W': 1,
-        'Sleep stage 1': 2,
-        'Sleep stage 2': 3,
-        'Sleep stage 3': 4,
-        'Sleep stage 4': 4, 
-        'Sleep stage R': 5
+        'Sleep stage W': 0,
+        'Sleep stage 1': 1,
+        'Sleep stage 2': 2,
+        'Sleep stage 3': 3,
+        'Sleep stage 4': 3, 
+        'Sleep stage R': 4
     }
 
     # converting the annotations to events
@@ -52,11 +52,11 @@ def extract_epochs(raw: mne.io.Raw, epoch_length: float = 30.0) -> mne.Epochs:
     # define the final event_id mapping for the epochs. This provides readable 
     # labels for your plots and analysis
     event_ids = {
-        'Sleep stage W': 1,
-        'Sleep stage 1': 2,
-        'Sleep stage 2': 3,
-        'Sleep stage 3/4': 4, # merged S3 and S4
-        'Sleep stage R': 5
+        'Sleep stage W': 0,
+        'Sleep stage 1': 1,
+        'Sleep stage 2': 2,
+        'Sleep stage 3/4': 3, # merged S3 and S4
+        'Sleep stage R': 4
     }
 
     # --- Creating the Epochs object ---
