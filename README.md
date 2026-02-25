@@ -395,10 +395,25 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
     └── utils                   # Helper functions scripts
         ├── __init__.py
         ├── data_loader.py      # Data loading script
+        ├── train.py            # Training and evaluating/testing script
         └── preprocessing.py    # Data processing script
 ```
 
 # Update Logs
+
+## 25th of Feb, 2026
+
+> ### 09:22 pm (IST)
+> #### New:
+>  + Added [train.py](./src/utils/train.py) - which contains the training/validation/testing logic with mlflow logging.
+>
+> #### Updates:
+>  + Updated the [sleep_staging.ipynb](./sleep_staging.ipynb) jupyter notebook with the training/validation/testing section with mlflow logging.
+>  + Updated the [\_\_init\_\_.py](./src/utils/__init__.py) and exposing [train.py](./src/utils/train.py) functions.
+>  + Updated the [preprocessing.py](./src/utils/preprocessing.py) moddule and fixed the labels indexing bug.
+>  + Updated [.gitignore](.gitignore).
+>  + Updated [README.md](./README.md).
+
 
 ## 24th of Feb, 2026
 
