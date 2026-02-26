@@ -4,7 +4,7 @@ Docstring for src.utils.__init__.py.train
 This module contains functions for training/evaluating/testing a PyTorch model.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-25-2026
+##### Last Updated: 02-27-2026
 """
 import copy
 import numpy as np
@@ -22,9 +22,9 @@ def train_one_epoch(
     optimiser : torch.optim.Optimizer,
     criterion : torch.nn.Module,
     device : torch.device,
-    metric_fn : Callable,
+    metric_fns : dict,
     max_grad_norm : float | None
-) -> Tuple[float, float]:
+) -> Tuple[float, dict]:
     """
     Executes one complete pass (epoch) over the training dataset.
 
@@ -40,8 +40,8 @@ def train_one_epoch(
         The loss function (e.g., CrossEntropyLoss).
     - device : torch.device
         The device (CPU or CUDA GPU) to perform computations on.
-    - metric_fn : callable
-        Function to calculate performance metrics (e.g., Cohen's Kappa).
+    - metric_fn : dict
+        A dictionary, containing functions to calculate performance metrics (e.g., Cohen's Kappa Score, Balance Accuracy Score).
     - max_grad_norm : float | None
         The maximum allowed norm for gradients. If not None, gradients are clipped.
 
@@ -49,8 +49,8 @@ def train_one_epoch(
     -------
     - avg_loss : float
         The average loss across all batches in this epoch.
-    - perform_metric : float 
-        The performance metric calculated over the entire epoch.
+    - preform_metrices : dict 
+        A dictionary containing the performance metrices calculated over the entire epoch.
     """
     # Set model to training model, which enables Dropout, BatchNorm updates, etc.
     model.train()
@@ -105,7 +105,7 @@ def train_one_epoch(
         y_pred_all.append(preds)
         y_true_all.append(y_true)
 
-        # Update    the progress bar text with the live loss
+        # Update the progress bar text with the live loss
         pbar.set_postfix({"loss": f"{loss.item():.4f}"})
     
     # create a one long single list for both
@@ -115,10 +115,12 @@ def train_one_epoch(
     # -- compute metrics
     # the average loss over all the batches
     avg_loss = float(np.mean(losses))
-    # performace metric compared of the predicted and real labels
-    preform_metric = metric_fn(y_true, y_pred)
+    # performace metrices compared of the predicted and real labels
+    preform_metrices = {}
+    for metric_fn_name, metric_fn in metric_fns.items():
+        preform_metrices[metric_fn_name] = metric_fn(y_true, y_pred)
 
-    return avg_loss, preform_metric
+    return avg_loss, preform_metrices
 
 
 @torch.inference_mode()
@@ -127,8 +129,8 @@ def evaluate(
     loader : torch.utils.data.DataLoader,
     criterion : torch.nn.Module,
     device : torch.device,
-    metric_fn : Callable
-) -> Tuple[float, float]:
+    metric_fns : dict
+) -> Tuple[float, dict]:
     """
     Evaluated the model on a validation or test dataset.
 
@@ -148,15 +150,15 @@ def evaluate(
         The loss function (e.g., CrossEntropyLoss).
     - device : torch.device
         The device (CPU or CUDA GPU) to perform computations on.
-    - metric_fn : callable
-        Function to calculate performance metrics (e.g., Cohen's Kappa).
+    - metric_fns : dict
+        A dictionary, containing functions to calculate performance metrics (e.g., Cohen's Kappa Score, Balance Accuracy Score).
 
     Returns
     -------
     - avg_loss : float
         The average loss across all batches in this epoch.
-    - perform_metric : float 
-        The performance metric calculated over the entire epoch.
+    - perform_metrices : dict 
+        A dictionary, containing the performance metrices calculated over the entire epoch.
     """
     # set the model to evaluation mode (disables Dropout, freezes BatchNorm)
     model.eval()
@@ -200,9 +202,11 @@ def evaluate(
 
     # calacualte the average loss and performance matric over all the batches
     avg_loss = float(np.mean(losses))
-    perform_metric = metric_fn(y_true, y_pred)
+    perform_metrices = {}
+    for metric_fn_name, metric_fn in metric_fns.items():
+        perform_metrices[metric_fn_name] = metric_fn(y_true, y_pred)
 
-    return avg_loss, perform_metric
+    return avg_loss, perform_metrices
 
 
 def fit_model(
@@ -212,7 +216,7 @@ def fit_model(
     optimiser : torch.optim.Optimizer,
     criterion : torch.nn.Module,
     device : torch.device,
-    metric_fn : Callable,
+    metric_fns : dict,
     n_epochs : int = 20,
     patience : int = 5,
     schedular : Optional[Union[LRScheduler, ReduceLROnPlateau]] | None = None,
@@ -237,8 +241,8 @@ def fit_model(
         The loss function (e.g., CrossEntropyLoss).
     - device : torch.device
         The device (CPU or CUDA GPU) to perform computations on.
-    - metric_fn : callable
-        Function to calculate performance metrics (e.g., Cohen's Kappa).
+    - metric_fns : dict
+        A dictionary, containing functions to calculate performance metrics (e.g., Cohen's Kappa Score, Balance Accuracy Score).
     - n_epochs : int
         The number of iterations to train the model using loader_train.
     - patience : int
@@ -266,28 +270,34 @@ def fit_model(
     history = []
 
     # print info column
-    print(f"{'Epoch':<6} | {'Train Loss':<10} | {'Val Loss':<10} | {'Train Perf':<10} | {'Val Perf':<10}")
-    print("-" * 60)
+    print(
+        f"{'Epoch':<6} | "
+        f"{'Train Loss':<10} | "
+        f"{'Val Loss':<10} | "
+        f"{'|'.join([f'{"Train " + metric_fun_name:<10}' for metric_fun_name in metric_fns.keys()])} | "
+        f"{'|'.join([f'{"Val " + metric_fun_name:<10}' for metric_fun_name in metric_fns.keys()])}"
+    )
+    print("-" * 82)
 
     for epoch in range(1, n_epochs+1):
         # train the model
-        train_avg_loss, train_perform_metric = train_one_epoch(
+        train_avg_loss, train_perform_metrices = train_one_epoch(
             model=model,
             loader=loader_train,
             optimiser=optimiser,
             criterion=criterion,
             device=device,
-            metric_fn=metric_fn,
+            metric_fns=metric_fns,
             max_grad_norm=max_grad_norm
         )
 
         # evaluate the model
-        eval_avg_loss, eval_perform_metric = evaluate(
+        eval_avg_loss, eval_perform_metrices = evaluate(
             model=model,
             loader=loader_valid,
             criterion=criterion,
             device=device,
-            metric_fn=metric_fn
+            metric_fns=metric_fns
         ) 
 
         # Step the Learning Rate Schedular
@@ -297,16 +307,23 @@ def fit_model(
             schedular.step(eval_avg_loss)
 
         # log results
-        history.append({
+        log = {
             "epoch" : epoch,
             "train_loss" : train_avg_loss,
             "evaluation_loss" : eval_avg_loss,
-            "train_performace" : train_perform_metric,
-            "evaluation_performace" : eval_perform_metric
-        })
+        }
+        for train_perform_metric_name, train_perform_metric_score in train_perform_metrices.items():
+            log[f"train_{train_perform_metric_name}"] = train_perform_metric_score
+        for eval_perform_metric_name, eval_perform_metric_score in eval_perform_metrices.items():
+            log[f"eval_{eval_perform_metric_name}"] = eval_perform_metric_score 
+        history.append(log)
 
-        print(
-            f"{epoch:<6} | {train_avg_loss:<10.4f} | {eval_avg_loss:<10.4f} | {train_perform_metric:<10.4f} | {eval_perform_metric:<10.4f}"
+        print( 
+            f"{epoch:<6} | "
+            f"{train_avg_loss:<10.4f} | "
+            f"{eval_avg_loss:<10.4f} | "
+            f"{' | '.join([f"{val:<23.4f}" for val in train_perform_metrices.values()])} | "
+            f"{' | '.join([f"{val:<20.4f}" for val in eval_perform_metrices.values()])}"
         )
         
         # MLflow tracking
@@ -314,8 +331,10 @@ def fit_model(
             # Note: When an active run exists globally, mlflow.log_metric automatically attaches to it
             mlflow.log_metric("train_loss", train_avg_loss, step=epoch)
             mlflow.log_metric("evaluation_loss", eval_avg_loss, step=epoch)
-            mlflow.log_metric("train_performance", train_perform_metric, step=epoch)
-            mlflow.log_metric("evaluation_performance", eval_perform_metric, step=epoch)
+            for train_perform_metric_name, train_perform_metric_score in train_perform_metrices.items(): 
+                mlflow.log_metric(f"train_{train_perform_metric_name}", train_perform_metric_score, step=epoch)
+            for eval_perform_metric_name, eval_perform_metric_score in eval_perform_metrices.items():
+                mlflow.log_metric(f"evaluation_{eval_perform_metric_name}", eval_perform_metric_score, step=epoch)
 
 
         # early stopping logic

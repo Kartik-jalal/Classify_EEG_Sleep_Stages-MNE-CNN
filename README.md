@@ -401,6 +401,14 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 # Update Logs
 
+## 27th of Feb, 2026
+
+> ### 12:37 am (IST)
+> #### Updates:
+>  + Updated [train.py](./src/utils/train.py), now when fitting or evaluating the model one can directly pass a dictionary of all the `callable` metric functions to use for performace metric.
+>  + Updated the [sleep_staging.ipynb](./sleep_staging.ipynb) jupyter notebook to incoporate the new changes to [train.py](./src/utils/train.py) and also added auto rereload for import as a config to the jupyter notebook.
+>  + Updated [README.md](./README.md).
+
 ## 25th of Feb, 2026
 
 > ### 09:22 pm (IST)
