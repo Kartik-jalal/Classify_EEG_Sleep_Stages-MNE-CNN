@@ -401,6 +401,13 @@ Lastly, make sure to select the kernel with name `.venv (<python verion>) (Pytho
 
 # Update Logs
 
+## 28th of Feb, 2026
+
+> ### 11:53 pm (IST)
+> #### Updates:
+>  + Updated [sleep_staging.ipynb](./sleep_staging.ipynb), [train.py](./src/utils/preprocessing.py) and [\_\_init\_\_.py](./src/utils/__init__.py), to incorporate `thread_map` and `process_map` from `tqdm.contrib.concurrent`. These changes optimise data loading and processing speeds via multi-threading and multi-processing.
+>  + Updated [README.md](./README.md).
+
 ## 27th of Feb, 2026
 
 > ### 12:37 am (IST)

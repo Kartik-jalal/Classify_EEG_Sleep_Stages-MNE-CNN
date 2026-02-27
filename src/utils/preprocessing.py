@@ -2,25 +2,76 @@
 Docstring for src.utils.__init__.py.preprocessing
 
 This module contains functions for preprocessing the raw sleep staging data, such as
-epoch extraction and standardization needed for training a sleep stage classifier.
+filtering and saving the raw EEG data, epoch extraction and standardization, and creating
+epochs dataset needed for training a sleep stage classifier.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-25-2026
+##### Last Updated: 02-27-2026
 """
 
 import mne
 import numpy as np
+import pathlib
+
+from typing import Any
+
+from src.datasets import EpochsDataset
+
+
+def filter_and_save_raw_data(
+    raw : mne.io.Raw, 
+    l_freq : Any, 
+    h_freq : Any, 
+    output_dir : pathlib.PosixPath
+) -> pathlib.PosixPath:
+    """
+    Loads, filters and save the raw EEG data.
+
+    Parameters
+    ----------
+    - raw : mne.io.Raw
+        The raw EEG data recording to perform the filtering on.
+    - l_freq : Any
+        Low-frequency cut-off; frequencies below this value will be filtered out.
+    - h_freq : Any
+        High-frequency cut-off; frequencies above this value will be filtered out.
+    - output_dir : pathlib.PosixPath
+        Directory where the filtered EEG data will be saved.
+
+    Returns
+    -------
+    - save_path : pathlib.PosixPath
+        Path to the filtered EEG data saved file.
+
+    """
+    # Load data into memory before filtering (required by MNE)
+    raw.load_data()
+
+    # perform band-pass filtering
+    raw.filter(l_freq=l_freq, h_freq=h_freq)
+    
+    # save the filtered raw data
+    save_path = output_dir / f"{raw.filenames[0].stem}_filtered_raw.fif",
+    raw.save(
+        fname=save_path[0],
+        overwrite=True
+    )
+
+    return save_path[0]
+
 
 def extract_epochs(raw: mne.io.Raw, epoch_length: float = 30.0) -> mne.Epochs:
     """
     Extract non overlapping epochs from the raw data.
 
-    Parameters:
+    Parameters
+    ----------
     - raw (mne.io.Raw): The raw EEG data.
     - epoch_length (float): The length of each epoch in seconds. Default is 30 sec
         because standard sleep staging (AASM rules) uses 30-second epochs..
 
-    Returns:
+    Returns
+    -------
     - mne.Epochs: The extracted epochs.
     """
     # Map annotations to event IDs
@@ -90,10 +141,12 @@ def scale_epoch(X: np.ndarray) -> np.ndarray:
     
     Ensures each channel in the epoch has mean 0 and std 1.
 
-    Parameters:
+    Parameters
+    ----------
     - X (np.ndarray): The input epoch data, shape (n_channels, n_times).
 
-    Returns:
+    Returns
+    -------
     - np.ndarray: The scaled epoch data, same shape as input.
     """
 
@@ -109,3 +162,47 @@ def scale_epoch(X: np.ndarray) -> np.ndarray:
     X_scaled = (X - mean) / std
 
     return X_scaled
+
+
+def create_epochs_ds(
+    raw : mne.io.Raw,
+    eeg_epoch_duration : float
+) -> EpochsDataset:
+    """
+    Extracts epochs of a single recording given the epochs window duration, and using
+    them create the EpochsDataset object.
+
+    Parameters
+    ----------
+    - raw : mne.io.Raw
+        The raw EEG data recording
+    - eeg_epoch_duration : float
+        The epochs window duration
+    
+    Returns
+    -------
+    - epoch_ds : EpochsDataset
+        An epoch dataset object of type `torch.utils.data.Dataset`.
+    """
+    # get the epochs objects
+    epochs = extract_epochs(raw=raw, epoch_length=eeg_epoch_duration)
+
+    # extract the data arrats needed for the Dataset class
+    # Note: We copy them to ensure they are standard NumPy arrays (not memory maps).
+    X = epochs.get_data(copy=True)  # shape: (n_epochs, n_channels, n_times)
+    y = epochs.events[:, -1] # shape: (n_epochs,), The last/third column contains the event IDs
+    
+    # get metadata
+    subject_id = raw.info["subject_info"]["id"]
+    recording_id = int(raw.info["subject_info"]["his_id"].split(" ")[-1])
+
+    # create the dataset
+    epoch_ds = EpochsDataset(
+        epochs_data=X,
+        epochs_labels=y,
+        subject_id=subject_id,
+        recording_id=recording_id,
+        transform=scale_epoch
+    )
+
+    return epoch_ds
