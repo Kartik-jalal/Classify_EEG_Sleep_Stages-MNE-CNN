@@ -3,10 +3,12 @@ Docstring for src.models.__init__.py.sleep_stager_chambon_2018
 
 This module defines the SleepStagerChambon2018 class, which is a PyTorch based CCN 
 architecture implementation used for sleep staging tasks. The architecture 
-implementation was described in Chambon at al. (2018)
+implementation was described in Chambon at al. (2018). However, in this model
+instead of using ReLU to introduce non-linearity we use LeakyRelu to prevent 
+dying neurons with the use of a leak.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-22-2026
+##### Last Updated: 03-04-2026
 """
 
 
@@ -44,18 +46,26 @@ class SleepStagerChambon2018(nn.Module):
         means a sample is recorded every 0.01 seconds or 0.01 x 1000 = 10 milliseconds).
     - n_classes : int, optional
         The number of sleep stages to predict. Default is 5 (W, N1, N2, N3, R).
-    - n_temporal_filters : int, optional
-        The number of feature maps (filters) to learn in the temporal convolutional
+    - n_spatial_filters : int, optional
+        The number of feature maps (filters) to learn in the spatial convolutional
         layers. Higher number increase model capacity but risk overfitting. Deafult 
         is 8.
+    - n_temporal_filters_l1 : int, optional
+        The number of feature maps (filters) to learn in the temporal convolutional
+        layer 1. Higher number increase model capacity but risk overfitting. Deafult 
+        is 18.
+    - n_temporal_filters_l2 : int, optional
+        The number of feature maps (filters) to learn in the temporal convolutional
+        layer 2. Higher number increase model capacity but risk overfitting. Deafult 
+        is 18.
     - temp_conv_size_sec : float, optional
         The physical size of the temporal filters in seconds. This dictates how long
         of a "time window" the network looks at in one step. Default is 0.5 seconds 
         i.e., 50 samples per window
     - max_pool_size_sec : float, optional
         The size of the max pooling window in seconds, Controls how aggressively the
-        time dimnesion is downsampled. Default is 0.125 seconds i.e., 
-        int(0.125 x 100) = 12 samples
+        time dimnesion is downsampled. Default is 0.08 seconds i.e., 
+        int(0.08 x 100) = 8 samples
     - dropout_rate : float, optional
         The probability of dropping a neuron in the final dense layer. Used for 
         regularisation to prevent overfitting. Default to 0.25 (25%).
@@ -65,10 +75,12 @@ class SleepStagerChambon2018(nn.Module):
         eeg_epoch_duration : float,
         n_channels : int,
         sfreq : float,
-        n_classes : int = 5,
-        n_temporal_filters : int = 8,
+        n_classes : int,
+        n_spatial_filters  : int = 8,
+        n_temporal_filters_l1 : int = 18,
+        n_temporal_filters_l2 : int = 18,
         temp_conv_size_sec : float = 0.5,
-        max_pool_size_sec : float = 0.125,
+        max_pool_size_sec : float = 0.08,
         dropout_rate : float = 0.25
     ):
         super().__init__()
@@ -94,7 +106,7 @@ class SleepStagerChambon2018(nn.Module):
                 # we want a filter that spans "all channels" but only "1 time step".
                 nn.Conv2d(
                     in_channels=1, # 1 input channel (the dummy depth dimension)
-                    out_channels=n_channels, # Number of new "virtual" channels / number of kernels
+                    out_channels=n_spatial_filters, # Number of new "virtual" channels / number of kernels
                     kernel_size=(n_channels, 1) # filter with N channels and 1 sample each channel
                 )
             )
@@ -107,11 +119,11 @@ class SleepStagerChambon2018(nn.Module):
             # Input : (Batch, 1, Virtual Channels, Time)
             nn.Conv2d(
                 in_channels=1,
-                out_channels=n_temporal_filters,
+                out_channels=n_temporal_filters_l1,
                 kernel_size=(1, temp_conv_samples),
                 padding=(0, pad_size) # padding only on the width edges as thier is no height to worry about
             ),
-            nn.ReLU(), # Relu activate function
+            nn.LeakyReLU(), # Leaky Relu activate function
             nn.MaxPool2d( # Max Pooling
                 kernel_size=(1, max_pool_samples)
             ),
@@ -119,12 +131,12 @@ class SleepStagerChambon2018(nn.Module):
             # -- Second Temporal Layer --
             # Input : (Batch, n_temporal_filters, Virtual Channels, Time)
             nn.Conv2d(
-                in_channels=n_temporal_filters,
-                out_channels=n_temporal_filters,
+                in_channels=n_temporal_filters_l1,
+                out_channels=n_temporal_filters_l2,
                 kernel_size=(1, temp_conv_samples),
                 padding=(0, pad_size)
             ),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool2d(
                 kernel_size=(1, max_pool_samples)
             )
@@ -133,14 +145,18 @@ class SleepStagerChambon2018(nn.Module):
 
         # ---- Block 3 : Classifier (Fully Connectedd Layer) ----
         # Maps the extracted features to the final 5 sleep stage probabilities.
-        # -- 
+        # --
         # We must calculate exactly how many features will emerge from the temporal
         # extractor so we can size the final Linear layer correctly.
-        # Every labeled eeg epoch has 30s (duration) *  100 Hz (sfreq) = 3000 samples
-        # It is divided by max_pool_samples twice due to the two MaxPool2d layers.
-        samples_after_pooling = (eeg_epoch_duration * sfreq) // (max_pool_samples ** 2)
-        # total number of samples
-        flattened_size = n_channels * n_temporal_filters * int(samples_after_pooling)
+        # A dummy forward pass is used to compute the exact flattened size, since
+        # padding and floor-division in MaxPool make a closed-form formula error-prone.
+        n_times = int(eeg_epoch_duration * sfreq)
+        dummy = torch.zeros(1, 1, n_channels, n_times)
+        if n_channels > 1:
+            dummy = self.spatial_conv(dummy)
+            dummy = dummy.transpose(1, 2)
+        dummy = self.temporal_extractor(dummy)
+        flattened_size = dummy.shape[1:].numel()
 
         self.classifier = nn.Sequential(
             # Unrolls the 3D feature map into a flat 1d vector (keeping batch dim)
