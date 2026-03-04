@@ -1,0 +1,59 @@
+# ============================================================
+# Sleep Stage Classification — Configuration
+# Model: SleepStagerChambon2018 (CNN)
+# Dataset: PhysioNet Sleep EDF
+#
+#
+# Author: Kartik M. Jalal
+# Last Update: 04-03-2026
+# ============================================================
+
+data:
+  dir:
+    s_p_data: "./data"                                         # Root dir for raw PhysioNet EDF downloads
+    s_p_data_filtered: "./data/sleep_physionet_data_filtered"  # Band-pass filtered (0.5–30 Hz) data
+    s_p_data_ica: "./data/sleep_physionet_data_ica"            # ICA artifact-cleaned data
+
+  eeg:
+    epochs_duration: 30.0   # Duration (sec) of each EEG epoch window (AASM standard)
+                            # → determines input tensor shape: (1, 2, duration × 100 Hz)
+
+  ds:
+    test_subjects_pct: 0.2   # Fraction of subjects held out for testing  (subject-wise split)
+    val_subjects_pct: 0.2    # Fraction of subjects held out for validation
+    train_batch_size: 128    # Epochs per training batch (each sample = one 30s epoch)
+    val_batch_size: 257      # Larger than train — no gradients stored during eval
+
+model:
+  architecture:
+    n_spatial_filters: 8         # Spatial conv filters — learns virtual electrode combinations
+                                 # from the 2 physical channels (Fpz-Cz, Pz-Oz)
+    n_temporal_filters_l1: 16    # 1st temporal conv layer filter count
+    n_temporal_filters_l2: 32    # 2nd temporal conv layer filter count
+    temp_conv_size_sec: 0.5      # Temporal kernel width in seconds (→ 50 samples at 100 Hz)
+                                 # Controls detection window for spindles, K-complexes, etc.
+    max_pool_size_sec: 0.08      # Max-pool window in seconds (→ 8 samples at 100 Hz)
+                                 # Downsamples the time dimension
+    dropout_rate: 0.35           # Dropout probability before final dense layer (regularization)
+
+  optimiser:
+    type: "Adam"
+    lr: 2e-5            # Learning rate — low for stable convergence
+    weight_decay: 1e-5   # L2 regularization penalty on weights
+
+  schedular:
+    type: "ReduceLROnPlateau"
+    mode: "min"        # Monitor direction — reduce LR when val loss stops decreasing
+    factor: 0.05       # Multiplier on LR reduction (new_lr = lr × 0.05 → 95% cut)
+    patience: 5        # Epochs with no improvement before triggering LR reduction
+    threshold: 1e-4    # Minimum change in val loss to count as an improvement
+
+  training:
+    n_epochs: 200                  # Maximum training epochs (may stop earlier)
+    early_stopping_patience: 20    # Stop if val loss doesn't improve for this many epochs
+    max_grad_norm: 1.0             # Gradient clipping norm — prevents exploding gradients
+
+mlflow:
+  tracking_uri: "http://localhost:5000/"       # MLflow server URL (start with: mlflow server -p 5000)
+  experiment_name: "Sleep_Staging_Chambon"     # Groups related runs together
+  run_name: "1"                                # Label for this specific run
