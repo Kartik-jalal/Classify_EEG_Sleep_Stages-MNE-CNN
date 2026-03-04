@@ -5,7 +5,7 @@ This module is responsible for loading the raw sleep staging data recording from
 downloaded PhysioNet Sleep dataset files.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-21-2026
+##### Last Updated: 03-04-2026
 """
 import os
 
@@ -35,13 +35,13 @@ def load_sleep_physionet_raw_data(
         which aren't useful for training a sleep classifier.
 
     Returns:
-    - mne.io.Raw: MNE Raw object containing the EEG data and annotations with cropped wake periods.
+    - mne.io.Raw: MNE Raw object containing the EEG and EOG data and annotations with cropped wake periods.
     """
     # load the raw European Data Format (EDF) data from the .edf file
     raw = mne.io.read_raw_edf(
         input_fname=raw_fname,
-        exclude= ( # exclude non-EEG channels from loading
-            'EOG horizontal', # EOG - 'eog' in MNE channel types
+        exclude= ( # exclude non-EEG channels from loading except the EOG channel
+            # 'EOG horizontal', # EOG - 'eog' in MNE channel types 
             'Resp oro-nasal', # respiration - 'misc' in MNE channel types
             'EMG submental', # EMG - 'misc' in MNE channel types
             'Temp rectal', # temperature - 'misc' in MNE channel types
@@ -111,9 +111,15 @@ def load_sleep_physionet_raw_data(
         for i in raw.ch_names
         if "EEG" in i
     }
+
     mne.rename_channels(
         raw.info, 
         ch_names
+    )
+
+    # set the "EOG horizontal" channel type to eog
+    raw.set_channel_types(
+        {"EOG horizontal" : "eog"}
     )
 
     # save the subject and recording ID as metadata in the raw.info object for later use
