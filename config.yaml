@@ -3,6 +3,8 @@
 # Model: SleepStagerChambon2018 (CNN)
 # Dataset: PhysioNet Sleep EDF
 #
+# Contains data paths, model architecture hyperparameters, training settings,
+# and MLflow configuration.
 #
 # Author: Kartik M. Jalal
 # Last Update: 04-03-2026
