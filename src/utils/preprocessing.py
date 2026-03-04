@@ -2,16 +2,17 @@
 Docstring for src.utils.__init__.py.preprocessing
 
 This module contains functions for preprocessing the raw sleep staging data, such as
-filtering and saving the raw EEG data, epoch extraction and standardization, and creating
+filtering, performing ICA, epoch extraction and standardization, and creating
 epochs dataset needed for training a sleep stage classifier.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-27-2026
+##### Last Updated: 03-04-2026
 """
 
 import mne
 import numpy as np
 import pathlib
+import gc
 
 from typing import Any
 
@@ -51,13 +52,79 @@ def filter_and_save_raw_data(
     raw.filter(l_freq=l_freq, h_freq=h_freq)
     
     # save the filtered raw data
-    save_path = output_dir / f"{raw.filenames[0].stem}_filtered_raw.fif",
+    save_path = output_dir / f"{raw.filenames[0].stem}_filtered_raw.fif"
     raw.save(
-        fname=save_path[0],
+        fname=save_path,
         overwrite=True
     )
 
-    return save_path[0]
+    return save_path
+
+
+def perform_ica(
+    raw_pair : tuple,
+    output_dir : pathlib.PosixPath
+) -> pathlib.PosixPath :
+    # unpack the old and filtered raw data
+    old_raw, filtered_raw = raw_pair
+
+    # ----- Step 1: Perform a higher cut-off frequency filter -----
+    old_raw.load_data().filter(l_freq=1, h_freq=40)
+
+
+    # ----- Step 2 : Initialise the ICA object -----
+    ica = mne.preprocessing.ICA(
+        n_components=2,
+        method='picard',
+        max_iter=500,
+        fit_params=dict(fastica_it=100),
+        random_state=42
+    )
+
+
+    # ----- Step 3 : Fit the ICA -----
+    ica.fit(old_raw, picks='eeg')
+    del old_raw
+
+
+    # ----- Step 4 : Creating epochs each for the EOG artefacts -----
+    eog_epochs = mne.preprocessing.create_eog_epochs(
+        raw=filtered_raw,
+        reject=None,
+        baseline=(None, -0.2),
+        tmin=-0.5,
+        tmax=0.5
+    )
+    eog_bad_ic_inds, _ = ica.find_bads_eog(
+        eog_epochs
+    )
+    # store these independent componenet indices that has been classified as EOG 
+    # artefacts
+    ic_to_exclude = eog_bad_ic_inds
+    ica.exclude = ic_to_exclude
+    del eog_epochs
+
+
+    # ----- Step 5 :  Apply the ICA -----
+    # We apply the weights to the EEG, then 'pick' only EEG to save space
+    ica.apply(
+        inst=filtered_raw.load_data()
+    )
+    filtered_raw.pick_types(eeg=True)
+    del ica
+
+    # ----- Step 6 : Save the data -----
+    save_path = output_dir / f"{filtered_raw.filenames[0].stem}_ica_cleaned_filtered_raw.fif"
+    filtered_raw.save(
+        fname=save_path,
+        overwrite=True
+    )
+
+    del filtered_raw
+    gc.collect()
+
+    return save_path
+
 
 
 def extract_epochs(raw: mne.io.Raw, epoch_length: float = 30.0) -> mne.Epochs:
