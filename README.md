@@ -3,6 +3,56 @@ This repository documents my work following a tutorial on training a CNN model o
 
 The original tutorial code is available in this [Github repo](https://github.com/hubertjb/dl-eeg-tutorial).
 
+# Pipeline Overview
+
+This project trains a CNN to classify 30-second EEG epochs into 5 sleep stages
+(W, N1, N2, N3, R) using the Chambon et al. (2018) architecture.
+
+### Dataset
+[PhysioNet Sleep EDF Expanded](https://physionet.org/content/sleep-edfx/) —
+83 subjects, 2 EEG channels (Fpz-Cz, Pz-Oz) sampled at 100 Hz. The original
+R&K annotations (stages 1–4 + REM) are mapped to the modern AASM standard
+(W, N1, N2, N3, R), with stages 3 and 4 merged into N3.
+
+### Preprocessing
+1. **Band-pass filter** (0.5–30 Hz) — removes high-frequency noise while
+   preserving all sleep-relevant frequency bands (Delta through Beta)
+2. **ICA artifact removal** — Picard ICA trained on a 1–40 Hz copy, EOG
+   artifacts automatically detected and removed from the filtered data.
+   The EOG channel is then dropped (only EEG channels are kept for training)
+3. **30-second epoch extraction** — continuous recordings are sliced into
+   non-overlapping 30s windows, each labelled with its sleep stage
+4. **Per-epoch z-score standardisation** — each epoch is independently scaled
+   to mean=0, std=1 per channel, so the model learns from wave morphology
+   rather than absolute voltage
+
+### Data Splitting
+Subject-wise split (60% train / 20% val / 20% test) to prevent data leakage —
+all recordings from a given subject stay in the same split.
+
+### Model
+The [SleepStagerChambon2018](src/models/sleep_stager_chambon_2018.py) CNN
+separates spatial (cross-channel) and temporal (across-time) feature extraction.
+Modified from the original paper to use **LeakyReLU** instead of ReLU to prevent
+dying neurons. All hyperparameters are configurable via [`config.yaml`](config.yaml).
+
+### Training
+- **Loss:** Weighted CrossEntropyLoss (class weights computed from training
+  set to handle stage imbalance — N2 is ~4x more common than N1)
+- **Optimiser:** Adam with weight decay (L2 regularisation)
+- **LR Scheduler:** ReduceLROnPlateau — reduces LR when validation loss plateaus
+- **Early stopping:** training halts if validation loss doesn't improve
+  for a configurable number of epochs
+- **Gradient clipping:** prevents exploding gradients from noisy EEG batches
+- **Experiment tracking:** all parameters and metrics logged to
+  [MLflow](http://localhost:5000/) for comparison across runs
+
+### Evaluation Metrics
+- **Cohen's Kappa** — agreement metric that accounts for class imbalance
+  (used during training as the primary performance metric)
+- **Balanced Accuracy** — average per-class recall (used for final test evaluation)
+
+
 # Background
 ## Sleep Staging
 
@@ -70,7 +120,7 @@ Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF
 ## Automated Sleep Staging
 We can use machine learning techniques to automate sleep staging and save time.
 
-### Traditional Feature-Based Machine Leearning
+### Traditional Feature-Based Machine Learning
 Starting from raw EEG data and based on expert knowledge, we initially extract features that help describe the sleep stages. A machine learning classifier can then be trained to understand the different sleep stage patterns and predict them on unseen recordings. However, to extract meaningful features in the first place, we also need to perform some preprocessing to clean the data.
 
 ### Deep Learning
@@ -276,17 +326,17 @@ Basic SGD has been improved with various techniques:
 **1. Learning Rate Schedular** <br />
 When training starts, a higher learning rate (LR) helps the model learn fast and escape bad local minima. However, as the model gets closer to the optimal solution, a high LR can cause it to "bounce around" the minimum without ever sitting into it.
 - *When it does:* A `torch` based LR Schedular like `ReduceLROnPlateau` can monitor the validation loss. If the loss stops improving for a set number of epochs, the schedular automatically multiplies the LR by a factor (e.g., 0.5), shrinking the step size.
-- *Why use it:* It allows fast initial learning and fine-grained tuning later, leading to better final performance and peventing the model from stalling.
+- *Why use it:* It allows fast initial learning and fine-grained tuning later, leading to better final performance and preventing the model from stalling.
 
 **2. Gradient Clipping** <br />
-During backpropagation, especially in deep networks or whenn using noisy data like EEG, a single bad batch can result in a massive error. This massive error creates an "exploding gradient" -  a gigantic weight update that destropys all the good progress the model has made so far.
-- *What it does:* When we use gradient clipping by norm (`torch.nn.utils.clip_grad_norm_`), before updating the weights, it checks the total magnitude (norm) if all gardients. If it exceeds a maximum threshold (e.g., 1.0), it scales them all down proportionally so the maximmum is exactly 1.0.
+During backpropagation, especially in deep networks or when using noisy data like EEG, a single bad batch can result in a massive error. This massive error creates an "exploding gradient" -  a gigantic weight update that destroys all the good progress the model has made so far.
+- *What it does:* When we use gradient clipping by norm (`torch.nn.utils.clip_grad_norm_`), before updating the weights, it checks the total magnitude (norm) if all gradients. If it exceeds a maximum threshold (e.g., 1.0), it scales them all down proportionally so the maximum is exactly 1.0.
 ```math
 Gradient_{new} = Gradient_{old} \times
 {{Total Gradient Norm}\over{max threshold}}
 
 ```
-- *Why use it:* It acts as a safety net, ensuring training remains stable and consistent even if a bad abtch produces a batch produces a massive error spike.
+- *Why use it:* It acts as a safety net, ensuring training remains stable and consistent even if a bad batch produces a massive error spike.
 
 <div style="text-align: center;">
 <img src="imgs/learning_rule.png" alt="Learning Rule" width="500">
@@ -301,7 +351,7 @@ Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF
 >   3. **Gradient descent**: Update weights using gradients and learning rate
 >   4. **Repeat**: Continue for many iterations (epochs) until loss converges
 >
->This iterative process is how neural networks "learn" the optimal weights to minimise the loss function and accurately classify sleep stages.**
+>This iterative process is how neural networks "learn" the optimal weights to minimise the loss function and accurately classify sleep stages.
 
 # Setup
 We will setup a python virtual environment (venv) for this project:
@@ -377,29 +427,46 @@ Ecosystem (optional)
 
 Lastly, make sure to select the kernel with name `.venv (<python verion>) (Python <python verion>)` when running the [jupyter notebook](./sleep_staging.ipynb). 
 
-## Project Structure
+# Project Structure
 ```bash
 .
 ├── README.md
-├── imgs                        # Screenshots and visualizations for the README
+├── imgs/                       # Images and visualizations for the README
 ├── reqs.txt                    # Python dependencies
-├── sleep_staging.ipynb         # Main entry point: Data exploration & model training
-└── src                         # Core logic and source code
-    ├── datasets                # Datasets classes
+├── config.yaml                 # Data paths, model hyperparameters, training settings, and MLflow config
+├── sleep_staging.ipynb         # Main entry point: data exploration, preprocessing & model training
+└── src/                        # Core logic and source code
+    ├── datasets/               # Dataset and splitting logic
     │   ├── __init__.py
-    │   ├── epochs.py           # PyTorch Dataset wrapper for MNE Epochs objectsData loading script
-    │   └── split.py            # Script for randomly splits a dataset into train, Val, and test sets
-    ├── models                  # Model architectures
-    │   ├──  __init__.py
-    │   └── models.py           # Defines the model class
-    └── utils                   # Helper functions scripts
+    │   ├── epochs.py           # PyTorch Dataset wrapper for MNE Epochs objects
+    │   └── split.py            # Subject-wise train/val/test splitting
+    ├── models/                 # Model architectures
+    │   ├── __init__.py
+    │   └── sleep_stager_chambon_2018.py  # Chambon 2018 spatial-temporal CNN (PyTorch)
+    └── utils/                  # Helper functions
         ├── __init__.py
-        ├── data_loader.py      # Data loading script
-        ├── train.py            # Training and evaluating/testing script
-        └── preprocessing.py    # Data processing script
+        ├── data_loader.py      # Load and crop raw PhysioNet Sleep EDF recordings
+        ├── preprocessing.py    # Band-pass filtering, ICA artifact removal, epoch extraction
+        └── train.py            # Training loop, evaluation, early stopping, MLflow logging
+
 ```
 
 # Update Logs
+
+## 04th of Mar, 2026
+ 
+> ### 05:25 pm (IST)
+> #### New:
+>  + Added [config.yaml](./config.yaml) file to pass and update parameters via it.
+>
+> #### Updates:
+>  + Updated [sleep_staging.ipynb](./sleep_staging.ipynb) with ICA artifact removal, using config.yaml for parameters and added description to every section.
+> + Updated [preprocessing.py](./src/utils/preprocessing.py) and [\_\_init\_\_.py](./src/utils/__init__.py) - added `peform_ica()` and also fix the filename bug in the `filter_and_save_raw_data()` function.
+>  + Updated the `load_sleep_physionet_raw_data` func (from [data_loader.py](./src/utils/data_loader.py)) to also include the EOG channel in the raw data because it is needed to perform ICA.
+>  + In [sleep_stager_chambon_2018.py](./src/models/sleep_stager_chambon_2018.py), updated the model to use `LeakyReLU` instead of `ReLU` and changed variables naming scheme and also default values.
+>  + In [split.py](./src/datasets/split.py), updated the naming scheme of few variables.
+>  + Updated the [README.md](./README.md)
+
 
 ## 28th of Feb, 2026
 
