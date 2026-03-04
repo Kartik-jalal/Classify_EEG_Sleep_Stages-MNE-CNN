@@ -111,7 +111,6 @@ def load_sleep_physionet_raw_data(
         for i in raw.ch_names
         if "EEG" in i
     }
-
     mne.rename_channels(
         raw.info, 
         ch_names
