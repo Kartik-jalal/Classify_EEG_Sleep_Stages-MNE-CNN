@@ -7,7 +7,7 @@ particularly those related to data loading, preprocessing and
 training/evaluating/testing the Pytorch model for sleep staging.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-27-2026
+##### Last Updated: 03-01-2026
 """
 
 from .data_loader import (
@@ -16,7 +16,8 @@ from .data_loader import (
 
 from .preprocessing import (
     filter_and_save_raw_data,
-    create_epochs_ds
+    create_epochs_ds,
+    perform_ica
 )
 
 from .train import (
@@ -30,6 +31,7 @@ __all__ = [
     # from preprocessing.py
     "filter_and_save_raw_data",
     "create_epochs_ds",
+    "perform_ica",
     # from train.py
     "fit_model",
     "evaluate"
