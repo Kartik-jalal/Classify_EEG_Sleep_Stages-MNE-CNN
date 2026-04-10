@@ -23,10 +23,12 @@ On a held-out test set (20% of subjects, never seen during training or validatio
 | **Balanced Accuracy** | ~0.78 |
 | **Test Loss** | ~0.56 |
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/results.png" alt="MLflow training metrics dashboard" width="900">
 <br />
 <em>MLflow dashboard showing training/evaluation loss, Cohen's Kappa progression, and final test metrics.</em>
+<br />
+<br />
 </div>
 
 **Interpretation:** A Cohen's Kappa of 0.72 indicates *substantial agreement* between the model's predictions and expert annotations (0.61–0.80 is considered "substantial" on the Landis & Koch scale). This is achieved with a lightweight model trained on only 2 EEG + 1 EOG channels — competitive with much larger architectures. The balanced accuracy of 0.78 confirms the model performs reasonably across all five classes, not just the dominant N2 stage.
@@ -84,18 +86,22 @@ The hypnogram plot shows the sleep cycle structure during an 8-hour sleep period
 
 In contrast, **sleep microstructure** refers to the characteristic frequencies and transient events within each stage. For example, Stage N2 features **sleep spindles** — oscillations at around 11–16 Hz — often followed by **K-complexes**, which are distinctive sharp slow waves.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/sleep_macro_structure.png" alt="Sleep macro structure" width="350">
 <img src="imgs/sleep_micro_structure.png" alt="Sleep micro structure" width="350">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=217">Banville & Höchenberger (2020) — BCBL</a> & <a href="https://www.macmillanhighered.com">Macmillan Higher Ed</a>
+<br />
+<br />
 </div>
 
 > **The Brain Bands** <br />
-> <div style="text-align: center;">
+> <div style="text-align: center;" align="center">
 > <img src="imgs/brain_bands.png" alt="Brain Bands" width="500">
 > <br />
 > Source: <a href="https://www.myndlift.com/post/what-are-brainwaves">myndlift</a>
+> <br />
+> <br />
 > </div>
 >
 >   + **Delta (1–4 Hz):** Deep sleep, or very slow cognitive processes.
@@ -111,18 +117,22 @@ Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF
 
 In a clinical setting, we run a **polysomnogram** test for electrophysiological recordings (EEG, EOG, ECG, etc.) in a well-controlled environment (e.g., sleep clinic).
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/polysomnogram.png" alt="Polysomnogram Test" width="350">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=217">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 After recording an 8-hour sleep session, sleep experts must manually annotate the raw data — a very lengthy and time-consuming process. Once we have the sleep stage annotations, they can be used to break down the sleep stages for deeper analysis or to check for the presence of specific transient events that help diagnose sleep disorders (e.g., sleep apnea, insomnia).
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/raw_data_sleep_staging.png" alt="Raw data of sleep recording" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=217">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 
@@ -136,10 +146,12 @@ Starting from raw EEG data and based on expert knowledge, we initially extract f
 ### Deep Learning
 On the other hand, instead of spending time and effort on feature extraction for traditional feature-based ML, we can choose the route of deep learning (DL). In DL, we don't have to worry about feature extraction. Instead, the chosen neural network architecture (multi-layer perceptron (MLP) / Fully-connected network (FC), convolutional neural network (CNN / ConvNet), etc.) will learn the best features to describe the different sleep stages and classify them accordingly.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/ml_techniques.png" alt="ML Technique for Automating Sleep Stages" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=217">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 > In both cases, we end up with a function that maps a raw EEG window (e.g., 30 seconds) to a sleep stage. The key difference is that traditional feature-based ML is more interpretable — since we design the features, we understand what the classifier is doing. However, this comes at the cost of extensive engineering effort. In contrast, DL is more of a black box where you tune hyperparameters to discover the optimal features automatically.
@@ -161,10 +173,12 @@ A FC/MLP consists of multiple layers with neurons/units. The first layer is the 
 
 Given our input (4 × 3000), it first gets flattened into a single vector of size 12,000, which is passed to the input layer. Each neuron in the next layer computes a weighted sum of all input neurons, applies a non-linear activation function, and passes the output forward. This process continues until reaching the output layer, where we have five neurons (one per sleep stage) producing probabilities that sum to 1.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/fc_net.png" alt="Fully-connected network" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=599">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 ### **Convolutional Neural Networks (CNN/ConvNet)**
@@ -173,10 +187,12 @@ CNNs use **convolutional kernels** (not just weights) combined with non-linear a
 For example, whether a sleep spindle appears at the beginning or end of the 30-second window, the CNN will still detect it and classify the input as N2 sleep stage.
 > **Key insight**: Convolution enables weight sharing and translation invariance.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/conv_net.png" alt="Convolutional Neural Network" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=692">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 ## **2. Loss Function**
@@ -350,10 +366,12 @@ Gradient_{new} = Gradient_{old} \times \frac{max\_threshold}{Total\_Gradient\_No
 ```
 - *Why use it:* It acts as a safety net, ensuring training remains stable and consistent even if a bad batch produces a massive error spike.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/learning_rule.png" alt="Learning Rule" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=836">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 > **The Training Loop in Summary**
@@ -398,11 +416,13 @@ Subject-wise split (60% train / 20% val / 20% test) to prevent data leakage. Sle
 
 ## Model Architecture
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/chambon_convnet.png" alt="Chambon 2018 Architecture Diagram" width="800">
 Spatial-Temporal CNN model proposed by <a href="https://doi.org/10.1109/TNSRE.2018.2813138">Chambon et al. (2018) </a>
 <br />
 Source: <a href="https://github.com/hubertjb/dl-eeg-tutorial/blob/main/sleep_staging_physionet.ipynb">Adapted from Banville et al. 2020</a>
+<br />
+<br />
 </div>
 
 The [SleepStager](src/models/sleep_stager.py) CNN is a variant of the architecture proposed by [Chambon et al. (2018)](https://doi.org/10.1109/TNSRE.2018.2813138). It separates feature extraction into two steps:
@@ -451,7 +471,7 @@ All hyperparameters are centralised in [`config.yaml`](config.yaml). Here's why 
 | Parameter | Value | Rationale |
 |---|---|---|
 | **Band-pass** | 0.5–30 Hz | Preserves all sleep bands (Delta through Beta). The 0.5 Hz high-pass removes electrode drift without cutting into Delta (starts at ~0.5 Hz). The 30 Hz low-pass removes muscle/line noise — nothing above Beta is useful for sleep staging. |
-| **3 channels** (2 EEG + 1 EOG) | Fpz-Cz, Pz-Oz, EOG | The original tutorial dropped EOG after ICA. We keep it because eye movement patterns are a primary clinical marker for REM sleep — the EOG channel gives the model direct access to this signal. |
+| **3 channels** (2 EEG + 1 EOG) | Fpz-Cz, Pz-Oz, EOG | We are keeping EOG as well because eye movement patterns are a primary clinical marker for REM sleep — the EOG channel gives the model direct access to this signal. |
 | **`n_spatial_filters`** | 8 | With 3 physical channels (up from 2 in the original), we need more spatial filters to learn useful virtual electrode combinations from the added EOG channel. 8 gives sufficient capacity without overfitting. |
 | **`n_temporal_filters_l1`** | 16 | First temporal layer captures low-level patterns (spindles, K-complexes, eye movements). 16 filters provide enough variety to represent the diverse transient events across sleep stages. |
 | **`n_temporal_filters_l2`** | 32 | Second layer combines low-level features into higher-level representations. Wider than L1 to capture more complex temporal combinations. |
@@ -542,8 +562,8 @@ This project was inspired by the excellent tutorial [*Deep Learning on Sleep Dat
 
 | Aspect | Original Tutorial | This Project |
 |---|---|---|
-| **Preprocessing** | Band-pass filter only | + Picard ICA for EOG artifact removal |
-| **Input channels** | 2 EEG (EOG dropped) | 3 channels (2 EEG + 1 EOG kept for REM detection) |
+| **Preprocessing** | low-pass filter only | + Picard ICA for EOG artifact removal |
+| **Input channels** | 2 EEG  | 3 channels (2 EEG + 1 EOG kept for REM detection) |
 | **Activation** | ReLU | LeakyReLU (prevents dying neurons) |
 | **Normalisation** | None | BatchNorm after every convolutional layer |
 | **Optimiser** | Adam | AdamW with decoupled weight decay and parameter grouping |
