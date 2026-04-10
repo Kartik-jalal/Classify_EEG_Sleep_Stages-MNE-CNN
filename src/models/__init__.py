@@ -1,19 +1,18 @@
 """
-Docstring for src.models
+Package initializer for `src.models`.
 
-This module serves as a package initializer for the `src.models` package.
-It imports and exposes Pytorch based CNN model (described in Chambon at al. (2018))
+Imports and exposes the PyTorch based CNN model (Chambon et al. (2018) variant)
 for sleep staging tasks.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-22-2026
+##### Last Updated: 04-04-2026
 """
-
-from .sleep_stager_chambon_2018 import (
-    SleepStagerChambon2018
+from .sleep_stager import (
+    SleepStager
 )
 
+
 __all__ = [
-    # from sleep_stager_chambon_2018.py
-    "SleepStagerChambon2018"
+    # from sleep_stager.py
+    "SleepStager"
 ]
