@@ -76,10 +76,12 @@ During sleep, EEG recordings show distinct patterns and strong transient events.
 
 5. **R (*REM Sleep*)** — This is where most of the dreaming occurs, and from the EEG perspective the recordings are very similar to awake EEG.
 
-<div style="text-align: center;">
+<div style="text-align: center;" align="center">
 <img src="imgs/hypnogram.png" alt="A hypnogram plot of sleep stages" width="500">
 <br />
 Source: <a href="https://youtu.be/nQD31jwhgng?list=PLSw2v7gKz4Pfp3yOGOm56TG5qsFF2sAyC&t=195">Banville & Höchenberger (2020) — BCBL</a>
+<br />
+<br />
 </div>
 
 The hypnogram plot shows the sleep cycle structure during an 8-hour sleep period. Sleep cycles last approximately 90 minutes and repeat throughout the night, progressing from wake to light sleep to deep sleep and finally REM sleep. This cyclical pattern is known as **sleep macrostructure**.
@@ -418,6 +420,7 @@ Subject-wise split (60% train / 20% val / 20% test) to prevent data leakage. Sle
 
 <div style="text-align: center;" align="center">
 <img src="imgs/chambon_convnet.png" alt="Chambon 2018 Architecture Diagram" width="800">
+<br />
 Spatial-Temporal CNN model proposed by <a href="https://doi.org/10.1109/TNSRE.2018.2813138">Chambon et al. (2018) </a>
 <br />
 Source: <a href="https://github.com/hubertjb/dl-eeg-tutorial/blob/main/sleep_staging_physionet.ipynb">Adapted from Banville et al. 2020</a>
