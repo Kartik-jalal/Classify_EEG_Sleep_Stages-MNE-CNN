@@ -1,15 +1,12 @@
 """
-Docstring for src.utils
+Package initializer for `src.utils`.
 
-This module serves as a package initializer for the `src.utils` package.
-It imports and exposes utility functions that are used across the project,
-particularly those related to data loading, preprocessing and 
-training/evaluating/testing the Pytorch model for sleep staging.
+Exposes utility functions for data loading, preprocessing (filtering, ICA,
+epoch extraction), and model training/evaluation for sleep staging.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 03-01-2026
+##### Last Updated: 04-04-2026
 """
-
 from .data_loader import (
     load_sleep_physionet_raw_data
 )
@@ -24,6 +21,7 @@ from .train import (
     fit_model,
     evaluate
 )
+
 
 __all__ = [
     # from data_loader.py

@@ -1,11 +1,13 @@
 """
-Docstring for src.utils.__init__.py.data_loader
+Data loading utilities for the PhysioNet Sleep EDF dataset.
 
-This module is responsible for loading the raw sleep staging data recording from the 
-downloaded PhysioNet Sleep dataset files.
+This module handles loading raw polysomnography recordings (EEG + EOG) from
+PhysioNet Sleep EDF files, attaching sleep stage annotations, cropping
+excessive wake periods, and preparing the Raw objects for downstream
+preprocessing.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 03-04-2026
+##### Last Updated: 04-04-2026
 """
 import os
 
@@ -19,29 +21,37 @@ def load_sleep_physionet_raw_data(
     crop_wake_mins: int = 30
 ) -> mne.io.Raw:
     """
-    This function load_sleep_physionet_raw is designed to load and preprocess a
-    single recording from the Sleep Physionet dataset. It handles file reading,
-    channel selection, annotation loading, cropping unnecessary wake periods, and
-    renaming channels.
+    Load and prepare a single recording from the PhysioNet Sleep EDF dataset.
 
-    Parameters:
-    - raw_fname: The path to the .edf file containing the raw polysomnography (PSG)
+    Reads the raw EDF file, keeps only EEG and EOG channels, attaches sleep
+    stage annotations, crops excessive wake periods, and stores subject/recording
+    metadata for downstream subject-wise splitting.
+
+    Parameters
+    ----------
+    - raw_fname : str
+        Path to the .edf file containing the raw polysomnography (PSG)
         data (EEG, EOG, EMG, etc.).
-    - annot_fname: The path to the corresponding annotation file (hypnogram) which
-        contains the sleep stages.
-    - crop_wake_mins: The number of minutes of "Wake" (W) stage to keep before the
-        first sleep stage and after the last sleep stage. This is important because
-        recordings often have long periods of wakefulness at the beginning and end
-        which aren't useful for training a sleep classifier.
+    - annot_fname : str
+        Path to the corresponding annotation file (hypnogram) which
+        contains the sleep stage labels.
+    - crop_wake_mins : int, optional
+        Minutes of Wake (W) to keep before the first sleep stage and after
+        the last sleep stage. Recordings often have long wake periods at
+        the start/end that add noise without useful training signal.
+        Default is 30 minutes.
 
-    Returns:
-    - mne.io.Raw: MNE Raw object containing the EEG and EOG data and annotations with cropped wake periods.
+    Returns
+    -------
+    - mne.io.Raw
+        MNE Raw object containing the EEG and EOG channels with sleep stage
+        annotations and cropped wake periods.
     """
     # load the raw European Data Format (EDF) data from the .edf file
     raw = mne.io.read_raw_edf(
         input_fname=raw_fname,
         exclude= ( # exclude non-EEG channels from loading except the EOG channel
-            # 'EOG horizontal', # EOG - 'eog' in MNE channel types 
+            # 'EOG horizontal', # EOG - 'eog' in MNE channel types (included for sleep staging)
             'Resp oro-nasal', # respiration - 'misc' in MNE channel types
             'EMG submental', # EMG - 'misc' in MNE channel types
             'Temp rectal', # temperature - 'misc' in MNE channel types
@@ -54,7 +64,7 @@ def load_sleep_physionet_raw_data(
     # set the loaded annotations to the raw data object
     raw.set_annotations(
         annotations=annots, 
-        emit_warning=False #  suppresses warnings if the annotations extend beyond the data duration (which can happen with some datasets)
+        emit_warning=False # suppresses warnings if the annotations extend beyond the data duration (which can happen with some datasets)
     )
 
     # crop the wake periods duration from the beginning and end of the recording
@@ -121,13 +131,17 @@ def load_sleep_physionet_raw_data(
         {"EOG horizontal" : "eog"}
     )
 
-    # save the subject and recording ID as metadata in the raw.info object for later use
-    basename = os.path.basename(raw_fname) # get the filename from the full path, e.g., SC4001E0-PSG.edf
-    subject_id, record_id = int(basename[3:5]), int(basename[5]) # e.g., "00" and 1 from "SC4001..."
-    
+    # Save subject and recording IDs as metadata in raw.info for downstream
+    # subject-wise splitting. MNE's subject_info dict has a fixed schema, so we
+    # store subject_id in 'id' and encode recording_id inside 'his_id' (the only
+    # free-text field available). Downstream code parses it back out via split().
+    basename = os.path.basename(raw_fname) # e.g., SC4001E0-PSG.edf
+    subject_id = int(basename[3:5])   # e.g., "00" from "SC4001..."
+    recording_id = int(basename[5])   # e.g., 1 from "SC4001..."
+
     raw.info['subject_info'] = {
         'id': subject_id,
-        'his_id': f"Subject: {subject_id}, Recording: {record_id}" 
+        'his_id': f"Subject: {subject_id}, Recording: {recording_id}"
     }
 
     return raw
