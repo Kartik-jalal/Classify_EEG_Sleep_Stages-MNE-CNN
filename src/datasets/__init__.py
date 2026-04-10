@@ -1,13 +1,13 @@
 """
-Docstring for src.datasets
+Package initializer for `src.datasets`.
 
-This module serves as a package initializer for the `src.datasets` package.
-It imports and exposes dataset class, split function that are used across the project.
+Exposes the EpochsDataset class for wrapping EEG/EOG epoch arrays as a 
+PyTorch Dataset, and the split_by_subject function for subject-wise 
+train/val/test splitting.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 02-22-2026
+##### Last Updated: 04-04-2026
 """
-
 from .epochs import (
     EpochsDataset
 )
@@ -15,6 +15,7 @@ from .epochs import (
 from .split import (
     split_by_subject
 )
+
 
 __all__ = [
     # from epochs.py

@@ -1,18 +1,18 @@
 """
-Docstring for src.datasets.__init__.py.split
+Subject-wise dataset splitting for train, validation, and test sets.
 
-This module contains functions for randomly splits a dataset into Train, Validation, and
-Test sets based on SUBJECT ID.
+This module contains functions for randomly splitting a dataset into Train,
+Validation, and Test sets based on subject ID, ensuring no data leakage
+between splits.
 
 ##### Author: Kartik M. Jalal
-##### Last Updated: 03-04-2026
+##### Last Updated: 04-04-2026
 """
-
-
 import numpy as np
 from torch.utils.data import ConcatDataset
 
 from typing import Tuple
+
 
 def split_by_subject(
     dataset : ConcatDataset,
@@ -21,13 +21,16 @@ def split_by_subject(
     seed : int = 42
 ) -> Tuple[ConcatDataset, ConcatDataset, ConcatDataset] :
     """
-    Randomly splits a dataset into Train, Validation, and Test sets based on SUBJECT ID.
-    Ensures that all recordings from a specific subject are kept together in one set.
+    Randomly split a dataset into Train, Validation, and Test sets based on subject ID.
+
+    Ensures that all recordings from a specific subject are kept together in
+    one split to prevent data leakage.
 
     Parameters
     ----------
     - dataset : ConcatDataset
-        The dataset to split.
+        A ConcatDataset of EpochsDataset objects, each with a `subject_id`
+        attribute identifying which subject the recording belongs to.
     - n_test_subjects : int
         Number of unique subjects to set aside for test.
     - n_val_subjects : int
@@ -37,8 +40,12 @@ def split_by_subject(
 
     Returns
     -------
-    - train_ds, val_ds, test_ds : ConcatDataset
-        Train, Validation, and Test sets
+    - train_ds : ConcatDataset
+        Training set (remaining subjects).
+    - val_ds : ConcatDataset
+        Validation set.
+    - test_ds : ConcatDataset
+        Test set.
     """
     # get the list of all subject IDs in the dataset
     all_subjects = [
@@ -48,7 +55,7 @@ def split_by_subject(
 
     # shuffle the subjects
     rng = np.random.RandomState(seed=seed)
-    shuffled_subjects = rng.permutation(unique_subjects) # random shuffle
+    shuffled_subjects = rng.permutation(unique_subjects)
 
     # select subjects for test, validation and train
     test_subjects = shuffled_subjects[:n_test_subjects]
@@ -57,7 +64,7 @@ def split_by_subject(
     ]
     train_subjects = shuffled_subjects[n_test_subjects + n_val_subjects :]
 
-    # get the orig indices of the subjects for each split
+    # get the dataset.datasets indices (per-recording) for each split
     test_subjects_idx = [
         i for i, s in enumerate(all_subjects) if s in test_subjects
     ]
@@ -73,7 +80,7 @@ def split_by_subject(
     print(f"Val Subjects ({len(val_subjects)}):\n\t{val_subjects}")
     print(f"Train Subjects ({len(train_subjects)}):\n\t{train_subjects}")
 
-    # create the subsets
+    # wrap each split's recordings into a new ConcatDataset
     test_ds = ConcatDataset([
         dataset.datasets[i] for i in test_subjects_idx
     ])
